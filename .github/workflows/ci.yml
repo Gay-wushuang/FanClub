@@ -35,6 +35,8 @@ jobs:
           node-version: 20
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
+      - name: Prisma generate (api)
+        run: pnpm --filter api exec prisma generate
       - run: pnpm typecheck
 
   build:
@@ -50,6 +52,6 @@ jobs:
           node-version: 20
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
+      - name: Prisma generate (api)
+        run: pnpm --filter api exec prisma generate
       - run: pnpm build
-
-
