@@ -19,47 +19,68 @@
 - pnpm 9.x
 - Docker & Docker Compose（用于本地数据库）
 
-### 安装依赖
+### 本地启动/Getting Started
+
+#### 1) 安装依赖
 
 ```bash
 pnpm install
 ```
 
-### 启动数据库
+#### 2) 启动数据库（需要 Docker Desktop）
 
 ```bash
 pnpm db:up
 ```
 
-### 运行数据库迁移
+#### 3) 配置环境变量（必须）
+
+出于安全原因，`apps/api/.env` 不会提交到仓库。首次运行请从模板复制一份：
+
+**Windows（PowerShell）**
+
+```powershell
+copy .env.example apps\\api\\.env
+```
+
+**macOS / Linux**
+
+```bash
+cp .env.example apps/api/.env
+```
+
+确认 `apps/api/.env` 至少包含：
+
+```
+DATABASE_URL="postgresql://fanclub:fanclub@localhost:5432/fanclub?schema=public"
+```
+
+> **注意**: 如果你改了 docker-compose 的用户名/密码/端口，记得同步更新 DATABASE_URL
+
+#### 4) 迁移数据库 + 生成 Prisma Client + Seed
 
 ```bash
 pnpm db:migrate
+cd apps/api
+npx prisma generate
+npx prisma db seed
+cd ../..
 ```
 
-### 填充种子数据
-
-```bash
-pnpm db:seed
-```
-
-### 启动开发服务器
-
-同时启动 API 和 Web：
+#### 5) 启动开发服务
 
 ```bash
 pnpm dev
 ```
 
-或者分别启动：
+- Web: http://localhost:3000
+- API: http://localhost:3001/health
 
-```bash
-# 仅启动 API (http://localhost:3001)
-pnpm dev:api
+### 常见问题
 
-# 仅启动 Web (http://localhost:3000)
-pnpm dev:web
-```
+#### Environment variable not found: DATABASE_URL
+
+→ 没有创建 `apps/api/.env` 或 `DATABASE_URL` 没填对，按上面第 3 步处理。
 
 ## 项目结构
 
@@ -161,5 +182,3 @@ cp .env.example .env.local
 ## 许可证
 
 MIT
-
-
