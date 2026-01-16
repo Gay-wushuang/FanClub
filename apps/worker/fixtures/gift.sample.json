@@ -1,0 +1,15 @@
+{
+  "type": "GIFT",
+  "occurredAt": "2024-01-01T12:00:00.000Z",
+  "payload": {
+    "id": "gift-123456",
+    "uid": "user-12345",
+    "userId": "user-12345",
+    "giftId": "gift-rose",
+    "gift_id": "gift-rose",
+    "count": 10,
+    "giftCount": 10,
+    "price": 1.5,
+    "timestamp": 1704110400000
+  }
+}

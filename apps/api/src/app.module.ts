@@ -11,5 +11,3 @@ import { DebugModule } from './debug/debug.module';
   providers: [AppService],
 })
 export class AppModule {}
-
-

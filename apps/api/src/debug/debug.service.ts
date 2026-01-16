@@ -28,6 +28,69 @@ export class DebugService {
       };
     }
   }
+
+  async getRooms() {
+    return this.prisma.room.findMany({
+      where: { isEnabled: true },
+      include: {
+        creator: {
+          select: { id: true, name: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getEvents(roomId?: string) {
+    const where = roomId ? { roomId } : {};
+
+    const [rawEvents, normalizedEvents] = await Promise.all([
+      this.prisma.rawEvent.findMany({
+        where,
+        take: 50,
+        orderBy: { receivedAt: 'desc' },
+        include: {
+          room: {
+            select: { id: true, platformRoomId: true, platform: true },
+          },
+        },
+      }),
+      this.prisma.normalizedEvent.findMany({
+        where,
+        take: 50,
+        orderBy: { occurredAt: 'desc' },
+        include: {
+          room: {
+            select: { id: true, platformRoomId: true, platform: true },
+          },
+        },
+      }),
+    ]);
+
+    return {
+      rawEvents,
+      normalizedEvents,
+    };
+  }
+
+  async getLedger(creatorId?: string) {
+    const where = creatorId ? { creatorId } : {};
+
+    return this.prisma.ledgerBEntry.findMany({
+      where,
+      take: 50,
+      orderBy: { occurredAt: 'desc' },
+      include: {
+        room: {
+          select: { id: true, platformRoomId: true, platform: true },
+        },
+        creator: {
+          select: { id: true, name: true },
+        },
+        normalizedEvent: {
+          select: { id: true, eventType: true, idempotencyKey: true },
+        },
+      },
+    });
+  }
 }
-
-

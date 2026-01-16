@@ -7,5 +7,3 @@ import { DebugService } from './debug.service';
   providers: [DebugService],
 })
 export class DebugModule {}
-
-

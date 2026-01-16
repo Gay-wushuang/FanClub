@@ -2,84 +2,65 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3
 
 export async function fetchDashboardData() {
   try {
-    // 先尝试调用真实的 API
-    const debugResponse = await fetch(`${API_BASE_URL}/debug/db`);
-    const debugData = await debugResponse.json();
+    const [roomsResponse, eventsResponse, ledgerResponse] = await Promise.all([
+      fetch(`${API_BASE_URL}/debug/rooms`).catch(() => null),
+      fetch(`${API_BASE_URL}/debug/events`).catch(() => null),
+      fetch(`${API_BASE_URL}/debug/ledger`).catch(() => null),
+    ]);
 
-    if (debugData.status === 'ok' && debugData.counts) {
-      // 如果有真实数据，返回 mock 数据（Day1 阶段）
-      // Day2 可以替换为真实的 API 调用
-      return {
-        rooms: [
-          {
-            id: 'room-1',
-            platform: 'BILIBILI',
-            platformRoomId: '123456',
-            isEnabled: true,
-          },
-          {
-            id: 'room-2',
-            platform: 'BILIBILI',
-            platformRoomId: '789012',
-            isEnabled: true,
-          },
-        ],
-        fanclubs: [
-          {
-            id: 'fanclub-1',
-            name: '测试粉丝团',
-          },
-        ],
-      };
-    }
+    const rooms = roomsResponse ? await roomsResponse.json() : [];
+    const events = eventsResponse
+      ? await eventsResponse.json()
+      : { rawEvents: [], normalizedEvents: [] };
+    const ledger = ledgerResponse ? await ledgerResponse.json() : [];
 
-    // 如果 API 不可用，返回 mock 数据
     return {
-      rooms: [
-        {
-          id: 'room-1',
-          platform: 'BILIBILI',
-          platformRoomId: '123456',
-          isEnabled: true,
-        },
-        {
-          id: 'room-2',
-          platform: 'BILIBILI',
-          platformRoomId: '789012',
-          isEnabled: true,
-        },
-      ],
-      fanclubs: [
-        {
-          id: 'fanclub-1',
-          name: '测试粉丝团',
-        },
-      ],
+      rooms: rooms || [],
+      events,
+      ledger,
     };
   } catch (error) {
-    // API 不可用时返回 mock 数据
-    console.warn('API 不可用，使用 mock 数据:', error);
+    console.warn('API 不可用:', error);
     return {
-      rooms: [
-        {
-          id: 'room-1',
-          platform: 'BILIBILI',
-          platformRoomId: '123456',
-          isEnabled: true,
-        },
-        {
-          id: 'room-2',
-          platform: 'BILIBILI',
-          platformRoomId: '789012',
-          isEnabled: true,
-        },
-      ],
-      fanclubs: [
-        {
-          id: 'fanclub-1',
-          name: '测试粉丝团',
-        },
-      ],
+      rooms: [],
+      events: { rawEvents: [], normalizedEvents: [] },
+      ledger: [],
     };
+  }
+}
+
+export async function fetchRooms() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/debug/rooms`);
+    return response.json();
+  } catch (error) {
+    console.error('Failed to fetch rooms:', error);
+    return [];
+  }
+}
+
+export async function fetchEvents(roomId?: string) {
+  try {
+    const url = roomId
+      ? `${API_BASE_URL}/debug/events?roomId=${roomId}`
+      : `${API_BASE_URL}/debug/events`;
+    const response = await fetch(url);
+    return response.json();
+  } catch (error) {
+    console.error('Failed to fetch events:', error);
+    return { rawEvents: [], normalizedEvents: [] };
+  }
+}
+
+export async function fetchLedger(creatorId?: string) {
+  try {
+    const url = creatorId
+      ? `${API_BASE_URL}/debug/ledger?creatorId=${creatorId}`
+      : `${API_BASE_URL}/debug/ledger`;
+    const response = await fetch(url);
+    return response.json();
+  } catch (error) {
+    console.error('Failed to fetch ledger:', error);
+    return [];
   }
 }

@@ -3,7 +3,7 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
+
   // 启用 CORS（开发环境）
   app.enableCors({
     origin: 'http://localhost:3000', // Next.js 默认端口
@@ -16,4 +16,3 @@ async function bootstrap() {
 }
 
 bootstrap();
-
