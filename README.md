@@ -108,13 +108,40 @@ fanclub/
 
 ## 环境变量
 
-复制 `.env.example` 为 `.env.local` 并配置：
+环境变量配置：
 
-```bash
-cp .env.example .env.local
+1. **根目录 `.env.example`** - 提交到仓库的模板文件
+2. **复制模板** - 将 `.env.example` 复制到需要的项目目录并重命名为 `.env`
+
+**复制到 API 服务**（必须）
+
+**Windows（PowerShell）**
+
+```powershell
+copy .env.example apps\api\.env
 ```
 
-最小必需配置：
+**macOS / Linux**
+
+```bash
+cp .env.example apps/api/.env
+```
+
+**复制到 Web 应用**（可选，用于前端环境变量）
+
+**Windows（PowerShell）**
+
+```powershell
+copy .env.example apps\web\.env
+```
+
+**macOS / Linux**
+
+```bash
+cp .env.example apps/web/.env
+```
+
+主要配置项：
 
 - `DATABASE_URL` - PostgreSQL 连接字符串
 - `API_PORT` - API 服务端口（默认 3001）
