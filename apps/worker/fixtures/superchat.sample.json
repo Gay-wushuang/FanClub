@@ -1,0 +1,13 @@
+{
+  "type": "SUPERCHAT",
+  "occurredAt": "2024-01-01T12:05:00.000Z",
+  "payload": {
+    "id": "sc-789012",
+    "eventId": "sc-789012",
+    "uid": "user-67890",
+    "userId": "user-67890",
+    "price": 50.0,
+    "message": "支持主播！",
+    "timestamp": 1704110700000
+  }
+}

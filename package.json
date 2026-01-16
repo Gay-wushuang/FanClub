@@ -15,13 +15,14 @@
     "dev": "concurrently \"pnpm dev:api\" \"pnpm dev:web\"",
     "dev:api": "pnpm --filter api dev",
     "dev:web": "pnpm --filter web dev",
+    "dev:worker": "pnpm --filter worker dev",
     "build": "pnpm --filter api build && pnpm --filter web build",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
     "db:up": "docker compose -f infra/docker-compose.yml up -d",
     "db:down": "docker compose -f infra/docker-compose.yml down",
     "db:migrate": "pnpm --filter api prisma:migrate",
-    "db:seed": "pnpm --filter api prisma db seed",
+    "db:seed": "pnpm --filter api prisma:seed",
     "prepare": "husky install"
   },
   "devDependencies": {

@@ -19,68 +19,50 @@
 - pnpm 9.x
 - Docker & Docker Compose（用于本地数据库）
 
-### 本地启动/Getting Started
-
-#### 1) 安装依赖
+### 安装依赖
 
 ```bash
 pnpm install
 ```
 
-#### 2) 启动数据库（需要 Docker Desktop）
+### 启动数据库
 
 ```bash
 pnpm db:up
 ```
 
-#### 3) 配置环境变量（必须）
-
-出于安全原因，`apps/api/.env` 不会提交到仓库。首次运行请从模板复制一份：
-
-**Windows（PowerShell）**
-
-```powershell
-copy .env.example apps\\api\\.env
-```
-
-**macOS / Linux**
-
-```bash
-cp .env.example apps/api/.env
-```
-
-确认 `apps/api/.env` 至少包含：
-
-```
-DATABASE_URL="postgresql://fanclub:fanclub@localhost:5432/fanclub?schema=public"
-```
-
-> **注意**: 如果你改了 docker-compose 的用户名/密码/端口，记得同步更新 DATABASE_URL
-
-#### 4) 迁移数据库 + 生成 Prisma Client + Seed
+### 运行数据库迁移
 
 ```bash
 pnpm db:migrate
-cd apps/api
-npx prisma generate
-npx prisma db seed
-cd ../..
 ```
 
-#### 5) 启动开发服务
+### 填充种子数据
+
+```bash
+pnpm db:seed
+```
+
+### 启动开发服务器
+
+同时启动 API、Web 和 Worker：
 
 ```bash
 pnpm dev
 ```
 
-- Web: http://localhost:3000
-- API: http://localhost:3001/health
+或者分别启动：
 
-### 常见问题
+```bash
+# 仅启动 API (http://localhost:3001)
+pnpm dev:api
 
-#### Environment variable not found: DATABASE_URL
+# 仅启动 Web (http://localhost:3000)
+pnpm dev:web
 
-→ 没有创建 `apps/api/.env` 或 `DATABASE_URL` 没填对，按上面第 3 步处理。
+# 仅启动 Worker（Replay 模式）
+pnpm dev:worker -- --mode=replay --repeat=10
+```
 
 ## 项目结构
 
@@ -106,9 +88,10 @@ fanclub/
 
 ### 开发
 
-- `pnpm dev` - 同时启动 API 和 Web
+- `pnpm dev` - 同时启动 API、Web 和 Worker
 - `pnpm dev:api` - 仅启动 API
 - `pnpm dev:web` - 仅启动 Web
+- `pnpm dev:worker` - 仅启动 Worker（支持 replay 模式）
 
 ### 数据库
 
@@ -146,16 +129,9 @@ cp .env.example .env.local
 ### Debug
 
 - `GET /debug/db` - 数据库连接状态和统计信息
-
-## Day0~Day1 交付清单
-
-- [x] `pnpm i` 一次成功
-- [x] `docker compose up -d` 启 Postgres 成功
-- [x] `pnpm db:migrate` 成功（Prisma migrate）
-- [x] `pnpm db:seed` 成功（插入 creator/room/fanclub）
-- [x] `pnpm dev` 同时启动 api/web
-- [x] `GET /health` 返回 ok
-- [x] 前端 `/dashboard` 能看到"房间列表/club 占位数据"
+- `GET /debug/rooms` - 获取所有启用的房间
+- `GET /debug/events?roomId=<roomId>` - 获取最近 50 条原始事件和标准化事件
+- `GET /debug/ledger?creatorId=<creatorId>` - 获取最近 50 条账本条目
 
 ## 开发规范
 
