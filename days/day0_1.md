@@ -94,8 +94,10 @@ fanclub/
 
 ### 2.2 环境变量（统一在 repo 根）
 
-- `.env.example`（必须提交）
-- `.env.local`（本地，不提交）
+- `.env.example`（必须提交，模板文件）
+- 本地复制到各项目目录（不提交）
+  - `apps/api/.env`（API 服务使用）
+  - `apps/web/.env`（Web 应用使用，可选）
 
 最小必需项：
 
