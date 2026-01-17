@@ -19,6 +19,24 @@
 - pnpm 9.x
 - Docker & Docker Compose（用于本地数据库）
 
+### 环境配置（重要）
+
+首次克隆仓库后，需要创建环境配置文件：
+
+**Windows（PowerShell）**
+
+```powershell
+copy .env.example apps\api\.env
+```
+
+**macOS / Linux**
+
+```bash
+cp .env.example apps/api/.env
+```
+
+> **重要**：`.env.example` 是模板文件，需要复制到各自项目目录中作为 `.env` 文件使用，不要直接修改模板文件。
+
 ### 安装依赖
 
 ```bash
@@ -125,20 +143,6 @@ copy .env.example apps\api\.env
 
 ```bash
 cp .env.example apps/api/.env
-```
-
-**复制到 Web 应用**（可选，用于前端环境变量）
-
-**Windows（PowerShell）**
-
-```powershell
-copy .env.example apps\web\.env
-```
-
-**macOS / Linux**
-
-```bash
-cp .env.example apps/web/.env
 ```
 
 主要配置项：

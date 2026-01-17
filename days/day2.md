@@ -183,6 +183,24 @@ pnpm --filter worker dev -- --mode=replay
 
 - GitHub Actions：Lint ✅ Type Check ✅ Build ✅
 
+### Step 5：修复常见问题（5 分钟）
+
+> 解决 Day2 实现中可能出现的常见问题。
+
+**要修复的文件：**
+
+- ✅ `apps/worker/src/pipeline/persistNormalizedEvent.ts` - 修复事务中止问题
+- ✅ `apps/worker/src/pipeline/applyLedgerB.ts` - 修复事务中止问题
+- ✅ `apps/worker/src/utils/logger.ts` - 修复 no-explicit-any 问题
+- ✅ `apps/web/.eslintrc.json` - 修复 Next.js 页面规则问题
+- ✅ `apps/worker/.eslintrc.cjs` - 修复 TypeScript 解析问题
+
+**成功输出长这样：**
+
+- ESLint 检查通过，无报错
+- 事务正常工作，无中止错误
+- 类型检查通过
+
 ---
 
 ## 2. 幂等键（idempotencyKey）— 直接用这套规则
