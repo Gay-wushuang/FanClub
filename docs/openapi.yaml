@@ -1,0 +1,3224 @@
+openapi: 3.0.3
+info:
+  title: FanClub API
+  version: 0.1.0
+servers:
+  - url: /api/v1
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+    SizeParam:
+      name: size
+      in: query
+      schema:
+        type: integer
+        default: 20
+    SortParam:
+      name: sort
+      in: query
+      schema:
+        type: string
+        description: Sort field, prefix with '-' for descending order (e.g., '-time' for descending by time, 'name' for ascending by name)
+        default: '-time'
+        example: '-time'
+        pattern: '^-?[a-zA-Z0-9_]+(,-?[a-zA-Z0-9_]+)*$'
+    StartTimeParam:
+      name: startTime
+      in: query
+      schema:
+        type: string
+        format: date-time
+    EndTimeParam:
+      name: endTime
+      in: query
+      schema:
+        type: string
+        format: date-time
+    QueryAnchorIdParam:
+      name: anchorId
+      in: query
+      schema:
+        type: string
+    PathAnchorIdParam:
+      name: anchorId
+      in: path
+      required: true
+      schema:
+        type: string
+    RoomIdParam:
+      name: roomId
+      in: query
+      schema:
+        type: string
+    StatusParam:
+      name: status
+      in: query
+      schema:
+        type: string
+    TypeParam:
+      name: type
+      in: query
+      schema:
+        type: string
+  responses:
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+    ForbiddenError:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+    NotFoundError:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+    ConflictError:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+    TooManyRequestsError:
+      description: Too Many Requests
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        code: 
+          type: integer
+          example: 0
+        message: 
+          type: string
+          example: ok
+        traceId: 
+          type: string
+          example: xxx
+        data:
+          description: payload
+          nullable: true
+          oneOf:
+            - type: object
+              additionalProperties: true
+            - type: array
+              items: {}
+      required: [code, message, traceId]
+    PageResponse:
+      type: object
+      properties:
+        page: 
+          type: integer
+          example: 1
+        size: 
+          type: integer
+          example: 20
+        total: 
+          type: integer
+          example: 138
+        items:
+          type: array
+          items: {}
+      required: [page, size, total, items]
+    UserBrief:
+      type: object
+      properties:
+        userId: 
+          type: string
+        nickname: 
+          type: string
+        avatarUrl: 
+          type: string
+      required: [userId, nickname]
+    SessionBrief:
+      type: object
+      properties:
+        sessionId: 
+          type: string
+        roomId: 
+          type: string
+        anchorId: 
+          type: string
+        title: 
+          type: string
+        category: 
+          type: string
+        startTime: 
+          type: string
+          format: date-time
+        endTime: 
+          type: string
+          format: date-time
+          nullable: true
+        durationSec: 
+          type: integer
+          nullable: true
+        status: 
+          $ref: '#/components/schemas/SessionStatus'
+        coverUrl: 
+          type: string
+          nullable: true
+        tags: 
+          type: array
+          items: 
+            type: string
+          nullable: true
+      required: [sessionId, roomId, anchorId, title, category, startTime, status]
+    SessionStatus:
+      type: string
+      enum: [LIVE, ENDED]
+    DanmakuType:
+      type: string
+      enum: [NORMAL, SC]
+      description: Danmaku type, NORMAL for normal danmaku, SC for super chat
+    DanmakuTypeFilter:
+      type: string
+      enum: [NORMAL, SC, ALL]
+      description: Danmaku type filter, ALL for all types, NORMAL for normal danmaku, SC for super chat
+    EnterLeaveAction:
+      type: string
+      enum: [ENTER, LEAVE]
+    Granularity:
+      type: string
+      enum: [MINUTE, HOUR, DAY, WEEK, MONTH]
+    ReviewStatus:
+      type: string
+      enum: [PENDING, APPROVED, REJECTED]
+    BlacklistMatchType:
+      type: string
+      enum: [KEYWORD, REGEX]
+    BlacklistLevel:
+      type: string
+      enum: [BLOCK, REVIEW, ALERT]
+    RiskSeverity:
+      type: string
+      enum: [P0, P1, P2]
+    RiskAlertStatus:
+      type: string
+      enum: [OPEN, ACK, RESOLVED]
+    RiskAction:
+      type: string
+      enum: [FREEZE_ROOM, FREEZE_USER, UNFREEZE, REVERSE, DELAY_GRANT]
+      description: Risk management actions
+      x-enum-varnames:
+        - FREEZE_ROOM
+        - FREEZE_USER
+        - UNFREEZE
+        - REVERSE
+        - DELAY_GRANT
+      x-enum-descriptions:
+        - Freeze the room to prevent further operations
+        - Freeze the user account
+        - Unfreeze a previously frozen room or user
+        - Reverse a previous operation
+        - Delay the grant of certain privileges
+    KillScopeType:
+      type: string
+      enum: [ROOM, ANCHOR]
+      description: Scope types for kill switch
+      x-enum-varnames:
+        - ROOM
+        - ANCHOR
+      x-enum-descriptions:
+        - Kill switch applies to a specific room
+        - Kill switch applies to a specific anchor
+    SessionSummary:
+      type: object
+      properties:
+        title: 
+          type: string
+        category: 
+          type: string
+        startTime: 
+          type: string
+          format: date-time
+        endTime: 
+          type: string
+          format: date-time
+        durationSec: 
+          type: integer
+        status: 
+          $ref: '#/components/schemas/SessionStatus'
+        revenue_fen: 
+          type: integer
+        income_fen: 
+          type: integer
+        paid_users: 
+          type: integer
+        paid_count: 
+          type: integer
+        paid_rate: 
+          type: number
+          format: float
+        danmaku_users: 
+          type: integer
+        danmaku_count: 
+          type: integer
+        sc_count: 
+          type: integer
+        gift_users: 
+          type: integer
+        gift_count: 
+          type: integer
+        peak_online: 
+          type: integer
+        avg_online: 
+          type: integer
+        avg_stay_sec: 
+          type: integer
+        data_delay_sec: 
+          type: integer
+      required: [title, category, startTime, status, revenue_fen, paid_users, danmaku_users, danmaku_count, sc_count, peak_online, data_delay_sec]
+    GiftEvent:
+      type: object
+      properties:
+        time: 
+          type: string
+          format: date-time
+        msgId: 
+          type: string
+        user: 
+          $ref: '#/components/schemas/UserBrief'
+        giftId: 
+          type: string
+        giftName: 
+          type: string
+        giftCount: 
+          type: integer
+        giftValue_fen: 
+          type: integer
+      required: [time, msgId, user, giftId, giftName, giftCount, giftValue_fen]
+    DanmakuEvent:
+      type: object
+      properties:
+        time: 
+          type: string
+          format: date-time
+        msgId: 
+          type: string
+        user: 
+          $ref: '#/components/schemas/UserBrief'
+        content: 
+          type: string
+        type: 
+          $ref: '#/components/schemas/DanmakuType'
+        scValue_fen: 
+          type: integer
+      required: [time, msgId, user, content, type]
+    PkEvent:
+      type: object
+      properties:
+        pkId: 
+          type: string
+        pkStartTime: 
+          type: string
+          format: date-time
+        pkEndTime: 
+          type: string
+          format: date-time
+        pkRevenue_fen: 
+          type: integer
+        pkPaidUsers: 
+          type: integer
+        opponentRoomId: 
+          type: string
+        result: 
+          type: string
+      required: [pkId, pkStartTime, pkEndTime, pkRevenue_fen, pkPaidUsers]
+    EnterLeaveEvent:
+      type: object
+      properties:
+        time: 
+          type: string
+          format: date-time
+        msgId: 
+          type: string
+        user: 
+          $ref: '#/components/schemas/UserBrief'
+        action: 
+          $ref: '#/components/schemas/EnterLeaveAction'
+        reason: 
+          type: string
+        staySec: 
+          type: integer
+      required: [time, msgId, user, action]
+    Note:
+      type: object
+      properties:
+        noteId: 
+          type: string
+        sessionId: 
+          type: string
+        content: 
+          type: string
+        createdAt: 
+          type: string
+          format: date-time
+        createdBy: 
+          type: string
+      required: [noteId, sessionId, content, createdAt, createdBy]
+    MetricPoint:
+      type: object
+      properties:
+        atTime: 
+          type: string
+          format: date-time
+        windowSec: 
+          type: integer
+        revenue_fen: 
+          type: integer
+        income_fen: 
+          type: integer
+        online: 
+          type: integer
+        danmaku_count: 
+          type: integer
+        gift_count: 
+          type: integer
+        paid_users: 
+          type: integer
+        paid_count: 
+          type: integer
+        avg_stay_sec: 
+          type: integer
+        data_delay_sec: 
+          type: integer
+      required: [atTime, windowSec, revenue_fen, online, danmaku_count, gift_count, paid_users, data_delay_sec]
+    MetricBucket:
+      type: object
+      properties:
+        bucketStartTime: 
+          type: string
+          format: date-time
+        bucketEndTime: 
+          type: string
+          format: date-time
+        revenue_fen: 
+          type: integer
+        income_fen: 
+          type: integer
+        online: 
+          type: integer
+        danmaku_count: 
+          type: integer
+        gift_count: 
+          type: integer
+        paid_users: 
+          type: integer
+        paid_count: 
+          type: integer
+        avg_stay_sec: 
+          type: integer
+        data_delay_sec: 
+          type: integer
+      required: [bucketStartTime, bucketEndTime]
+    OverlayConfig:
+      type: object
+      properties:
+        anchorId: 
+          type: string
+        sessionId: 
+          type: string
+        refreshMode: 
+          type: string
+          enum: [WS, POLL]
+        wsUrl: 
+          type: string
+        pollIntervalSec: 
+          type: integer
+        theme: 
+          type: string
+        fields: 
+          type: array
+          items: 
+            type: string
+        killed: 
+          type: boolean
+        killReason: 
+          type: string
+      required: [anchorId, refreshMode]
+    OverlayData:
+      type: object
+      properties:
+        online: 
+          type: integer
+        revenue_fen: 
+          type: integer
+        danmaku_count: 
+          type: integer
+        gift_count: 
+          type: integer
+        pkStatus: 
+          type: string
+        data_delay_sec: 
+          type: integer
+        killed: 
+          type: boolean
+        killReason: 
+          type: string
+      required: [online, revenue_fen, danmaku_count, gift_count, data_delay_sec]
+    AuditLog:
+      type: object
+      properties:
+        logId: 
+          type: string
+        actorId: 
+          type: string
+        actorType: 
+          type: string
+        action: 
+          type: string
+        targetType: 
+          type: string
+        targetId: 
+          type: string
+        details: 
+          type: object
+        createdAt: 
+          type: string
+          format: date-time
+      required: [logId, actorId, actorType, action, targetType, targetId, createdAt]
+    LoginRequest:
+      type: object
+      properties:
+        username: 
+          type: string
+        password: 
+          type: string
+      required: [username, password]
+    LoginResponse:
+      type: object
+      properties:
+        accessToken: 
+          type: string
+        refreshToken: 
+          type: string
+        expiresInSec: 
+          type: integer
+        roles: 
+          type: array
+          items: 
+            type: string
+        userId: 
+          type: string
+        nickname: 
+          type: string
+      required: [accessToken, expiresInSec, roles, userId, nickname]
+    UserInfoResponse:
+      type: object
+      properties:
+        userId: 
+          type: string
+        nickname: 
+          type: string
+        roles: 
+          type: array
+          items: 
+            type: string
+        anchorIds: 
+          type: array
+          items: 
+            type: string
+        roomIds: 
+          type: array
+          items: 
+            type: string
+      required: [userId, nickname, roles]
+    NoteRequest:
+      type: object
+      properties:
+        content: 
+          type: string
+      required: [content]
+    OverlayTokenRequest:
+      type: object
+      properties:
+        anchorId: 
+          type: string
+        sessionId: 
+          type: string
+        scope: 
+          type: string
+          enum: [OBS, DESKTOP, WEB]
+      required: [anchorId, scope]
+    OverlayTokenResponse:
+      type: object
+      properties:
+        token: 
+          type: string
+        expiresAt: 
+          type: string
+          format: date-time
+      required: [token, expiresAt]
+    BlacklistRule:
+      type: object
+      properties:
+        id: 
+          type: string
+        matchType: 
+          $ref: '#/components/schemas/BlacklistMatchType'
+        value: 
+          type: string
+        level: 
+          $ref: '#/components/schemas/BlacklistLevel'
+        createdAt: 
+          type: string
+          format: date-time
+        updatedAt: 
+          type: string
+          format: date-time
+      required: [id, matchType, value, level]
+    CreateBlacklistRuleRequest:
+      type: object
+      properties:
+        matchType: 
+          $ref: '#/components/schemas/BlacklistMatchType'
+        value: 
+          type: string
+        level: 
+          $ref: '#/components/schemas/BlacklistLevel'
+      required: [matchType, value, level]
+    ReviewItem:
+      type: object
+      properties:
+        id: 
+          type: string
+        content: 
+          type: string
+        type: 
+          type: string
+        status: 
+          $ref: '#/components/schemas/ReviewStatus'
+        submittedAt: 
+          type: string
+          format: date-time
+      required: [id, content, type, status, submittedAt]
+    RiskAlert:
+      type: object
+      properties:
+        id: 
+          type: string
+        severity: 
+          $ref: '#/components/schemas/RiskSeverity'
+        status: 
+          $ref: '#/components/schemas/RiskAlertStatus'
+        roomId: 
+          type: string
+        createdAt: 
+          type: string
+          format: date-time
+        updatedAt: 
+          type: string
+          format: date-time
+      required: [id, severity, status, createdAt]
+security:
+  - BearerAuth: []
+paths:
+  /:
+    get:
+      operationId: healthCheck
+      summary: Health Check
+      description: API health check endpoint to avoid Prism 404 root path issue
+      tags: [system]
+      security: []
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+  /auth/login:
+    post:
+      summary: Login
+      description: User login to get access token
+      tags: [auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/LoginResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /auth/refresh:
+    post:
+      summary: Refresh Token
+      description: Refresh access token using refresh token
+      tags: [auth]
+      security: []
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /auth/logout:
+    post:
+      operationId: logout
+      summary: Logout
+      description: User logout
+      tags: [auth]
+      security: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /health:
+    get:
+      operationId: getHealth
+      summary: Health Check
+      description: Check if the service is running
+      tags: [system]
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+  /me:
+    get:
+      operationId: getCurrentUser
+      summary: Get Current User
+      description: Get current user information
+      tags: [auth]
+      responses:
+        '200':
+          description: User information retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/UserInfoResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /sessions:
+    get:
+      operationId: listSessions
+      summary: Get Sessions List
+      description: Get list of live sessions with optional filters
+      tags: [sessions]
+      parameters:
+        - $ref: '#/components/parameters/QueryAnchorIdParam'
+        - $ref: '#/components/parameters/RoomIdParam'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/SessionStatus'
+        - $ref: '#/components/parameters/StartTimeParam'
+        - $ref: '#/components/parameters/EndTimeParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Sessions list retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PageResponse'
+                          - properties:
+                              items:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/SessionBrief'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /sessions/{sessionId}:
+    get:
+      operationId: getSessionDetail
+      summary: Get Session Detail
+      description: Get detailed information of a specific session
+      tags: [sessions]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Session detail retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/SessionBrief'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /sessions/{sessionId}/summary:
+    get:
+      operationId: getSessionSummary
+      summary: Get Session Summary
+      description: Get basic data summary for a specific session
+      tags: [events]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Session summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/SessionSummary'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /sessions/{sessionId}/events/gifts:
+    get:
+      operationId: getGiftEvents
+      summary: Get Gift Events
+      description: Get gift events for a specific session
+      tags: [events]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/StartTimeParam'
+        - $ref: '#/components/parameters/EndTimeParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Gift events retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PageResponse'
+                          - properties:
+                              items:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/GiftEvent'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /sessions/{sessionId}/events/danmaku:
+    get:
+      operationId: getDanmakuEvents
+      summary: Get Danmaku Events
+      description: Get danmaku events for a specific session
+      tags: [events]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/DanmakuTypeFilter'
+        - $ref: '#/components/parameters/StartTimeParam'
+        - $ref: '#/components/parameters/EndTimeParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Danmaku events retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PageResponse'
+                          - properties:
+                              items:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/DanmakuEvent'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /sessions/{sessionId}/events/pk:
+    get:
+      operationId: getPkEvents
+      summary: Get PK Events
+      description: Get PK events for a specific session
+      tags: [events]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/StartTimeParam'
+        - $ref: '#/components/parameters/EndTimeParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: PK events retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PageResponse'
+                          - properties:
+                              items:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/PkEvent'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /sessions/{sessionId}/events/enter-leave:
+    get:
+      operationId: getEnterLeaveEvents
+      summary: Get Enter Leave Events
+      description: Get enter/leave events for a specific session
+      tags: [events]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/StartTimeParam'
+        - $ref: '#/components/parameters/EndTimeParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Enter/leave events retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PageResponse'
+                          - properties:
+                              items:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/EnterLeaveEvent'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /sessions/{sessionId}/notes:
+    get:
+      operationId: getSessionNotes
+      summary: Get Session Notes
+      description: Get notes for a specific session
+      tags: [events]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Session notes retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PageResponse'
+                          - properties:
+                              items:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/Note'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      operationId: createSessionNote
+      summary: Create Session Note
+      description: Create a new note for a specific session
+      tags: [events]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteRequest'
+      responses:
+        '200':
+          description: Note created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          noteId: 
+                            type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /notes/{noteId}:
+    delete:
+      operationId: deleteNote
+      summary: Delete Note
+      description: Delete a specific note
+      tags: [events]
+      parameters:
+        - name: noteId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Note deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /sessions/{sessionId}/metrics/point:
+    get:
+      operationId: getMetricPoint
+      summary: Get Metric Point
+      description: Get metric point for a specific session at a specific time
+      tags: [metrics]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: atTime
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: windowSec
+          in: query
+          schema:
+            type: integer
+            default: 60
+      responses:
+        '200':
+          description: Metric point retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/MetricPoint'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /sessions/{sessionId}/metrics/range:
+    get:
+      operationId: getMetricRange
+      summary: Get Metric Range
+      description: Get metric range with aggregation buckets for a specific session
+      tags: [metrics]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: startTime
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: endTime
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: granularity
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/Granularity'
+      responses:
+        '200':
+          description: Metric range retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          granularity: 
+                            $ref: '#/components/schemas/Granularity'
+                          items: 
+                            type: array
+                            items: 
+                              $ref: '#/components/schemas/MetricBucket'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /agent/anchors:
+    get:
+      operationId: listAgentAnchors
+      summary: Get Agent Anchors
+      description: Get list of anchors managed by the agent
+      tags: [agent]
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Agent anchors retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PageResponse'
+                          - properties:
+                              items:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    anchorId: 
+                                      type: string
+                                    anchorName: 
+                                      type: string
+                                    roomIds: 
+                                      type: array
+                                      items: 
+                                        type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /agent/anchors/{anchorId}/sessions:
+    get:
+      operationId: listAgentAnchorSessions
+      summary: Get Agent Anchor Sessions
+      description: Get list of sessions for a specific anchor managed by the agent
+      tags: [agent]
+      parameters:
+        - name: anchorId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: roomId
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/SessionStatus'
+        - $ref: '#/components/parameters/StartTimeParam'
+        - $ref: '#/components/parameters/EndTimeParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Agent anchor sessions retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PageResponse'
+                          - properties:
+                              items:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/SessionBrief'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /agent/anchors/{anchorId}/metrics/range:
+    get:
+      operationId: getAgentAnchorMetricRange
+      summary: Get Agent Anchor Metric Range
+      description: Get metric range for a specific anchor managed by the agent
+      tags: [agent]
+      parameters:
+        - name: anchorId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: startTime
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: endTime
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: granularity
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/Granularity'
+      responses:
+        '200':
+          description: Agent anchor metric range retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          granularity: 
+                            $ref: '#/components/schemas/Granularity'
+                          items: 
+                            type: array
+                            items: 
+                              $ref: '#/components/schemas/MetricBucket'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /overlay/token:
+    post:
+      operationId: getOverlayToken
+      summary: Get Overlay Token
+      description: Get overlay token for OBS/Desktop/Web
+      tags: [overlay]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OverlayTokenRequest'
+      responses:
+        '200':
+          description: Overlay token retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/OverlayTokenResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /overlay/config:
+    get:
+      operationId: getOverlayConfig
+      summary: Get Overlay Config
+      description: Get overlay configuration
+      tags: [overlay]
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Overlay config retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/OverlayConfig'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /overlay/data:
+    get:
+      operationId: getOverlayData
+      summary: Get Overlay Data
+      description: Get overlay real-time data
+      tags: [overlay]
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Overlay data retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/OverlayData'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /sessions/{sessionId}/stream:
+    get:
+      operationId: getSessionStream
+      summary: Get Session Stream
+      description: Get real-time session stream via SSE
+      tags: [overlay]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Session stream retrieved successfully
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /ws/sessions/{sessionId}:
+    get:
+      operationId: getSessionWebSocket
+      summary: Get Session WebSocket
+      description: Get real-time session data via WebSocket
+      tags: [overlay]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '101':
+          description: WebSocket connection established
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /fanclub/{anchorId}:
+    get:
+      operationId: getFanClubInfo
+      summary: Get FanClub Info
+      description: Get FanClub basic information
+      tags: [fanclub]
+      parameters:
+        - name: anchorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: FanClub info retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          anchorId: 
+                            type: string
+                          name: 
+                            type: string
+                          description: 
+                            type: string
+                          joinPolicy: 
+                            type: string
+                          levelRules: 
+                            type: array
+                            items: 
+                              type: object
+                          perks: 
+                            type: array
+                            items: 
+                              type: object
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /fanclub/{anchorId}/join:
+    post:
+      operationId: joinFanClub
+      summary: Join FanClub
+      description: Join a FanClub
+      tags: [fanclub]
+      parameters:
+        - name: anchorId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                agreeTerms: 
+                  type: boolean
+              required: [agreeTerms]
+      responses:
+        '200':
+          description: Joined FanClub successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          memberId: 
+                            type: string
+                          level: 
+                            type: integer
+                          joinedAt: 
+                            type: string
+                            format: date-time
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /fanclub/{anchorId}/leave:
+    post:
+      operationId: leaveFanClub
+      summary: Leave FanClub
+      description: Leave a FanClub
+      tags: [fanclub]
+      parameters:
+        - name: anchorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Left FanClub successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          ok: 
+                            type: boolean
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /fanclub/{anchorId}/me:
+    get:
+      operationId: getFanClubMemberInfo
+      summary: Get FanClub Member Info
+      description: Get FanClub member information
+      tags: [fanclub]
+      parameters:
+        - name: anchorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: FanClub member info retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          memberId: 
+                            type: string
+                          level: 
+                            type: integer
+                          exp: 
+                            type: integer
+                          badges: 
+                            type: array
+                            items: 
+                              type: object
+                          status: 
+                            type: string
+                          joinedAt: 
+                            type: string
+                            format: date-time
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /fanclub/{anchorId}/tasks:
+    get:
+      operationId: getFanClubTasks
+      summary: Get FanClub Tasks
+      description: Get FanClub tasks
+      tags: [fanclub]
+      parameters:
+        - name: anchorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: FanClub tasks retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            taskId: 
+                              type: string
+                            title: 
+                              type: string
+                            type: 
+                              type: string
+                            progress: 
+                              type: integer
+                            goal: 
+                              type: integer
+                            status: 
+                              type: string
+                            rewardExp: 
+                              type: integer
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /fanclub/{anchorId}/tasks/{taskId}/claim:
+    post:
+      operationId: claimFanClubTaskReward
+      summary: Claim FanClub Task Reward
+      description: Claim reward for a completed FanClub task
+      tags: [fanclub]
+      parameters:
+        - name: anchorId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Task reward claimed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          claimed: 
+                            type: boolean
+                          newExp: 
+                            type: integer
+                          newLevel: 
+                            type: integer
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /fanclub/{anchorId}/events:
+    get:
+      operationId: getFanClubEvents
+      summary: Get FanClub Events
+      description: Get FanClub events
+      tags: [fanclub]
+      parameters:
+        - name: anchorId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/StartTimeParam'
+        - $ref: '#/components/parameters/EndTimeParam'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: FanClub events retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PageResponse'
+                          - properties:
+                              items:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    time: 
+                                      type: string
+                                      format: date-time
+                                    type: 
+                                      type: string
+                                    title: 
+                                      type: string
+                                    deltaExp: 
+                                      type: integer
+                                    detail: 
+                                      type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /sessions/{sessionId}/export:
+    get:
+      operationId: exportSessionData
+      summary: Export Session Data
+      description: Export session data in CSV format
+      tags: [export]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: kind
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [SUMMARY, GIFTS, DANMAKU, PK, ENTER_LEAVE, NOTES]
+        - name: format
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [CSV]
+      responses:
+        '200':
+          description: Session data exported successfully
+          content:
+            text/csv:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /agent/anchors/{anchorId}/export:
+    get:
+      operationId: exportAgentAnchorData
+      summary: Export Agent Anchor Data
+      description: Export agent anchor data in CSV format
+      tags: [export]
+      parameters:
+        - name: anchorId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: kind
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [METRICS_RANGE]
+        - name: format
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [CSV]
+        - name: startTime
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: endTime
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: granularity
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/Granularity'
+      responses:
+        '200':
+          description: Agent anchor data exported successfully
+          content:
+            text/csv:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/blacklist/rules:
+    get:
+      operationId: getBlacklistRules
+      summary: Get Blacklist Rules
+      description: Get blacklist rules
+      tags: [admin]
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Blacklist rules retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PageResponse'
+                          - properties:
+                              items:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/BlacklistRule'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      operationId: createBlacklistRule
+      summary: Create Blacklist Rule
+      description: Create a new blacklist rule
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBlacklistRuleRequest'
+      responses:
+        '200':
+          description: Blacklist rule created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/blacklist/rules/{id}:
+    put:
+      operationId: updateBlacklistRule
+      summary: Update Blacklist Rule
+      description: Update a blacklist rule
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlacklistRule'
+      responses:
+        '200':
+          description: Blacklist rule updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      operationId: deleteBlacklistRule
+      summary: Delete Blacklist Rule
+      description: Delete a blacklist rule
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Blacklist rule deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/blacklist/publish:
+    post:
+      operationId: publishBlacklist
+      summary: Publish Blacklist
+      description: Publish blacklist rules
+      tags: [admin]
+      responses:
+        '200':
+          description: Blacklist published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/blacklist/rollback:
+    post:
+      operationId: rollbackBlacklist
+      summary: Rollback Blacklist
+      description: Rollback blacklist to a specific version
+      tags: [admin]
+      parameters:
+        - name: version
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Blacklist rolled back successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/blacklist/versions:
+    get:
+      operationId: getBlacklistVersions
+      summary: Get Blacklist Versions
+      description: Get blacklist versions
+      tags: [admin]
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Blacklist versions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/blacklist/import:
+    post:
+      operationId: importBlacklistRules
+      summary: Import Blacklist Rules
+      description: Import blacklist rules from CSV
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          text/csv:
+            schema:
+              type: string
+      responses:
+        '200':
+          description: Blacklist rules imported successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/blacklist/export.csv:
+    get:
+      operationId: exportBlacklistRules
+      summary: Export Blacklist Rules
+      description: Export blacklist rules to CSV
+      tags: [admin]
+      responses:
+        '200':
+          description: Blacklist rules exported successfully
+          content:
+            text/csv:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/review/items:
+    get:
+      operationId: getReviewItems
+      summary: Get Review Items
+      description: Get review queue items
+      tags: [admin]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ReviewStatus'
+        - name: type
+          in: query
+          schema:
+            type: string
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Review items retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PageResponse'
+                          - properties:
+                              items:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/ReviewItem'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/review/items/{id}:
+    get:
+      operationId: getReviewItemDetail
+      summary: Get Review Item Detail
+      description: Get review item detail
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Review item detail retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/ReviewItem'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      operationId: makeReviewDecision
+      summary: Make Review Decision
+      description: Make decision on a review item
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                decision: 
+                  type: string
+                  enum: [APPROVE, REJECT]
+                reason: 
+                  type: string
+              required: [decision, reason]
+      responses:
+        '200':
+          description: Review decision made successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/review/export.csv:
+    get:
+      operationId: exportReviewData
+      summary: Export Review Data
+      description: Export review data in CSV format
+      tags: [admin]
+      responses:
+        '200':
+          description: Review data exported successfully
+          content:
+            text/csv:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/risk/alerts:
+    get:
+      operationId: getRiskAlerts
+      summary: Get Risk Alerts
+      description: Get risk alerts
+      tags: [admin]
+      parameters:
+        - name: severity
+          in: query
+          schema:
+            $ref: '#/components/schemas/RiskSeverity'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/RiskAlertStatus'
+        - name: roomId
+          in: query
+          schema:
+            type: string
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Risk alerts retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PageResponse'
+                          - properties:
+                              items:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/RiskAlert'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/risk/alerts/{id}:
+    get:
+      operationId: getRiskAlertDetail
+      summary: Get Risk Alert Detail
+      description: Get risk alert detail
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Risk alert detail retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/RiskAlert'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/risk/actions:
+    post:
+      operationId: executeRiskAction
+      summary: Execute Risk Action
+      description: Execute risk management action
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action: 
+                  $ref: '#/components/schemas/RiskAction'
+                targetType: 
+                  type: string
+                targetId: 
+                  type: string
+                reason: 
+                  type: string
+              required: [action, targetType, targetId, reason]
+      responses:
+        '200':
+          description: Risk action executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/risk/export.csv:
+    get:
+      operationId: exportRiskData
+      summary: Export Risk Data
+      description: Export risk data in CSV format
+      tags: [admin]
+      responses:
+        '200':
+          description: Risk data exported successfully
+          content:
+            text/csv:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/reconcile/daily:
+    get:
+      operationId: getDailyReconciliation
+      summary: Get Daily Reconciliation
+      description: Get daily reconciliation data
+      tags: [admin]
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Daily reconciliation data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/reconcile/diff:
+    get:
+      operationId: getReconciliationDiff
+      summary: Get Reconciliation Diff
+      description: Get reconciliation differences
+      tags: [admin]
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: status
+          in: query
+          schema:
+            type: string
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Reconciliation diff retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/reconcile/diff/{id}/repair:
+    post:
+      operationId: repairReconciliationDiff
+      summary: Repair Reconciliation Diff
+      description: Repair reconciliation difference
+      tags: [admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action: 
+                  type: string
+                  enum: [REPLAY_NORMALIZER, REPLAY_LEDGER, WAIVE]
+                reason: 
+                  type: string
+              required: [action, reason]
+      responses:
+        '200':
+          description: Reconciliation diff repaired successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/reconcile/daily/export.csv:
+    get:
+      operationId: exportDailyReconciliation
+      summary: Export Daily Reconciliation
+      description: Export daily reconciliation data in CSV format
+      tags: [admin]
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Daily reconciliation data exported successfully
+          content:
+            text/csv:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/kill-switch:
+    get:
+      operationId: getKillSwitchStatus
+      summary: Get Kill Switch Status
+      description: Get kill switch status
+      tags: [admin]
+      parameters:
+        - name: scopeType
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/KillScopeType'
+        - name: scopeId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Kill switch status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      operationId: updateKillSwitch
+      summary: Update Kill Switch
+      description: Update kill switch configuration
+      tags: [admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scopeType: 
+                  $ref: '#/components/schemas/KillScopeType'
+                scopeId: 
+                  type: string
+                webPluginDisabled: 
+                  type: boolean
+                obsOverlayDisabled: 
+                  type: boolean
+                desktopWidgetDisabled: 
+                  type: boolean
+                reason: 
+                  type: string
+              required: [scopeType, scopeId, reason]
+      responses:
+        '200':
+          description: Kill switch updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/audit/logs:
+    get:
+      operationId: getAuditLogs
+      summary: Get Audit Logs
+      description: Get audit logs
+      tags: [audit]
+      parameters:
+        - name: startTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: actorId
+          in: query
+          schema:
+            type: string
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Audit logs retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PageResponse'
+                          - properties:
+                              items:
+                                type: array
+                                items:
+                                  $ref: '#/components/schemas/AuditLog'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/audit/export.csv:
+    get:
+      operationId: exportAuditLogs
+      summary: Export Audit Logs
+      description: Export audit logs in CSV format
+      tags: [audit]
+      responses:
+        '200':
+          description: Audit logs exported successfully
+          content:
+            text/csv:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/anchors:
+    get:
+      operationId: listAnchors
+      summary: Get Anchors List
+      description: Get list of anchors with optional filters
+      tags: [admin]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ACTIVE, INACTIVE, SUSPENDED]
+        - name: nickname
+          in: query
+          schema:
+            type: string
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Anchors list retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PageResponse'
+                          - properties:
+                              items:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    anchorId: 
+                                      type: string
+                                    nickname: 
+                                      type: string
+                                    status: 
+                                      type: string
+                                    roomIds: 
+                                      type: array
+                                      items: 
+                                        type: string
+                                    createdAt: 
+                                      type: string
+                                      format: date-time
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/anchors/{anchorId}:
+    get:
+      operationId: getAnchorDetail
+      summary: Get Anchor Detail
+      description: Get detailed information of a specific anchor
+      tags: [admin]
+      parameters:
+        - name: anchorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Anchor detail retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          anchorId: 
+                            type: string
+                          nickname: 
+                            type: string
+                          avatarUrl: 
+                            type: string
+                          status: 
+                            type: string
+                          roomIds: 
+                            type: array
+                            items: 
+                              type: string
+                          agentId: 
+                            type: string
+                          createdAt: 
+                            type: string
+                            format: date-time
+                          updatedAt: 
+                            type: string
+                            format: date-time
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/anchors/{anchorId}/status:
+    put:
+      operationId: updateAnchorStatus
+      summary: Update Anchor Status
+      description: Enable/disable an anchor with reason
+      tags: [admin]
+      parameters:
+        - name: anchorId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status: 
+                  type: string
+                  enum: [ACTIVE, INACTIVE, SUSPENDED]
+                reason: 
+                  type: string
+              required: [status, reason]
+      responses:
+        '200':
+          description: Anchor status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/anchors/{anchorId}/bindings:
+    get:
+      operationId: getAnchorBindings
+      summary: Get Anchor Bindings
+      description: Get binding relationships for a specific anchor
+      tags: [admin]
+      parameters:
+        - name: anchorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Anchor bindings retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          anchorId: 
+                            type: string
+                          rooms: 
+                            type: array
+                            items: 
+                              type: object
+                              properties:
+                                roomId: 
+                                  type: string
+                                platform: 
+                                  type: string
+                                createdAt: 
+                                  type: string
+                                  format: date-time
+                          agent: 
+                            type: object
+                            properties:
+                              agentId: 
+                                type: string
+                              agentName: 
+                                type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/agents:
+    get:
+      operationId: listAgents
+      summary: Get Agents List
+      description: Get list of agents with optional filters
+      tags: [admin]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ACTIVE, INACTIVE, SUSPENDED]
+        - name: agentName
+          in: query
+          schema:
+            type: string
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Agents list retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        allOf:
+                          - $ref: '#/components/schemas/PageResponse'
+                          - properties:
+                              items:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    agentId: 
+                                      type: string
+                                    agentName: 
+                                      type: string
+                                    status: 
+                                      type: string
+                                    anchorCount: 
+                                      type: integer
+                                    createdAt: 
+                                      type: string
+                                      format: date-time
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/agents/{agentId}:
+    get:
+      operationId: getAgentDetail
+      summary: Get Agent Detail
+      description: Get detailed information of a specific agent
+      tags: [admin]
+      parameters:
+        - name: agentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Agent detail retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          agentId: 
+                            type: string
+                          agentName: 
+                            type: string
+                          status: 
+                            type: string
+                          createdAt: 
+                            type: string
+                            format: date-time
+                          updatedAt: 
+                            type: string
+                            format: date-time
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/agents/{agentId}/status:
+    put:
+      operationId: updateAgentStatus
+      summary: Update Agent Status
+      description: Enable/disable an agent with reason
+      tags: [admin]
+      parameters:
+        - name: agentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status: 
+                  type: string
+                  enum: [ACTIVE, INACTIVE, SUSPENDED]
+                reason: 
+                  type: string
+              required: [status, reason]
+      responses:
+        '200':
+          description: Agent status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/agents/{agentId}/bind-anchors:
+    post:
+      operationId: bindAgentAnchors
+      summary: Bind Agent Anchors
+      description: Bind anchors to a specific agent
+      tags: [admin]
+      parameters:
+        - name: agentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                anchorIds: 
+                  type: array
+                  items: 
+                    type: string
+              required: [anchorIds]
+      responses:
+        '200':
+          description: Anchors bound to agent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/agents/{agentId}/unbind-anchors:
+    post:
+      operationId: unbindAgentAnchors
+      summary: Unbind Agent Anchors
+      description: Unbind anchors from a specific agent
+      tags: [admin]
+      parameters:
+        - name: agentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                anchorIds: 
+                  type: array
+                  items: 
+                    type: string
+              required: [anchorIds]
+      responses:
+        '200':
+          description: Anchors unbound from agent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/dashboard/overview:
+    get:
+      operationId: getDashboardOverview
+      summary: Get Dashboard Overview
+      description: Get dashboard overview data with key metrics
+      tags: [admin]
+      parameters:
+        - $ref: '#/components/parameters/StartTimeParam'
+        - $ref: '#/components/parameters/EndTimeParam'
+      responses:
+        '200':
+          description: Dashboard overview retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          reviewCount: 
+                            type: integer
+                            example: 123
+                          rejectRate: 
+                            type: number
+                            format: float
+                            example: 0.15
+                          riskAlertCount: 
+                            type: integer
+                            example: 45
+                          reconciliationDiffCount: 
+                            type: integer
+                            example: 7
+                          activeAnchors: 
+                            type: integer
+                            example: 89
+                          topAnchors: 
+                            type: array
+                            items: 
+                              type: object
+                              properties:
+                                anchorId: 
+                                  type: string
+                                nickname: 
+                                  type: string
+                                revenue_fen: 
+                                  type: integer
+                                online: 
+                                  type: integer
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /admin/dashboard/top-anchors:
+    get:
+      operationId: getTopAnchors
+      summary: Get Top Anchors
+      description: Get top anchors by specified metric
+      tags: [admin]
+      parameters:
+        - name: metric
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [revenue, online, danmaku]
+        - $ref: '#/components/parameters/StartTimeParam'
+        - $ref: '#/components/parameters/EndTimeParam'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - $ref: '#/components/parameters/SortParam'
+      responses:
+        '200':
+          description: Top anchors retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items: 
+                          type: object
+                          properties:
+                            anchorId: 
+                              type: string
+                            nickname: 
+                              type: string
+                            value: 
+                              type: integer
+                            ranking: 
+                              type: integer
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
