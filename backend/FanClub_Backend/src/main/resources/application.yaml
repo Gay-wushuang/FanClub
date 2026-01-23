@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: FanClub_Backend
+  datasource:
+    url: jdbc:mysql://39.97.189.49:3306/fanclub
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: FanClub
+    password: YHeZsP5LRXHcRtLy
+
+jwt:
+  secret: FanClubSecretKey12345
