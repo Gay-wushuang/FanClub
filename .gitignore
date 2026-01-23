@@ -8,3 +8,6 @@ coverage/
 .env
 .env.*
 .DS_Store
+API 分类总览.md
+FanClub (MySQL).md
+数据库表.txt

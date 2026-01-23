@@ -1,5 +1,0 @@
-spring.application.name:
-  FanClub_Backend
-
-jwt.secret:
-  FanClubSecretKey12345
