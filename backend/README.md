@@ -1,29 +1,9 @@
-# v0.0代码功能说明
+# v0.1后端代码更新说明：
 
-### com.example
+这是一个尚在开发中的版本，仅为接口展示统一起见，提前提交。
 
-##### anno：日志注解接口
+此版本大幅削减无实际意义的冗余代码，优化了数据库，包-类关系，提高了代码可读性。
 
-##### aop：面向切面编程函数包
+项目主题仍然采用SpringBoot3构建，数据库交互采用JPA，加密使用Spring-Security，登录校验，权限认证使用SA-Token，添加了OpenAPI文档和Swagger UI。
 
-##### filter：拦截器
-
-##### utils：开发工具（JWT升级版，OSS等）
-
-##### exception：全局异常处理
-
-##### exceptions：定义异常类型
-
-##### controller：控制器层
-
-##### service：服务层
-
-##### mapper：DAO数据交互层
-
-### resources
-
-##### com/example/mapper：mybatis数据库查询xml
-
-##### application.yaml：配置文件
-
-##### logback.xml：日志配置
+此外，数据库mysql在docker部署，简化了迁移难度，未来正式版本我会上传正式的docker-compose。目前数据库构建请参考entity实体类的定义。
