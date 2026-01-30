@@ -653,6 +653,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiResponse'
+  /api/v1/:
+    get:
+      operationId: apiV1HealthCheck
+      summary: API V1 Health Check
+      description: API health check endpoint for /api/v1/ path
+      tags: [system]
+      security: []
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
   /auth/login:
     post:
       summary: Login

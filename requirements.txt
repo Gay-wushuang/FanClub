@@ -1,0 +1,19 @@
+# FanClub 项目依赖清单
+# 注意：本项目主要是 Node.js 项目，使用 pnpm 作为包管理器
+# 以下是项目中使用的主要工具和依赖
+
+# Node.js 依赖管理
+# 包管理器: pnpm
+# 请使用以下命令安装前端依赖:
+pnpm install
+
+# 开发依赖
+# @stoplight/prism-cli: 用于启动 Mock 服务
+# 安装命令: pnpm add -D @stoplight/prism-cli
+
+# 后端依赖 (Java 项目)
+# 请参考 backend/FanClub_Backend/pom.xml 文件
+# 使用 Maven 构建和管理依赖
+
+# 启动 Mock 服务的命令
+# pnpm prism mock docs/openapi.yaml -p 4010
