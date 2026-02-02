@@ -52,6 +52,7 @@ http://localhost:4010/api/v1/  # API 健康检查
 | `admin` | 管理端接口，包括主播管理、经纪人管理、黑名单、审计日志等 |
 | `export` | 数据导出接口，支持批量数据导出 |
 | `audit` | 审计日志接口，记录系统操作日志 |
+| `bilibili` | Bilibili直播数据监控接口，包括直播间信息获取、统计数据等 |
 
 ## 5. 核心数据模型
 
@@ -156,13 +157,102 @@ Authorization: Bearer <token>
 
 - **API 规范**：OpenAPI 3.0.3
 - **Mock 工具**：@stoplight/prism-cli
-- **包管理器**：pnpm
+- **前端包管理**：pnpm
 - **Node 版本**：18+
+- **后端技术**：Java Spring Boot
+- **Java 版本**：21.0.10+
+- **构建工具**：Maven
+- **HTTP 客户端**：OkHttp
+- **认证方式**：JWT
 
-## 10. 贡献指南
+## 10. 后端服务构建与启动
+
+### 10.1 环境要求
+- **Java**：21.0.10+
+- **Maven**：3.9.12+
+
+### 10.2 构建后端服务
+```powershell
+# 进入后端目录
+cd backend/FanClub_Backend
+
+# 构建项目
+E:\Java\apache-maven-3.9.12\bin\mvn.cmd clean package
+```
+
+### 10.3 启动后端服务
+```powershell
+# 在后端目录执行
+E:\Java\jdk-21.0.10\bin\java.exe -jar target/FanClub_BackEnd-0.0.1-SNAPSHOT.jar
+```
+
+### 10.4 服务访问
+- **服务地址**：http://localhost:8080
+- **API 前缀**：/api/v1
+
+### 10.5 健康检查
+后端服务启动后，可通过以下地址验证服务状态：
+```
+http://localhost:8080/  # 根路径健康检查
+http://localhost:8080/api/v1/  # API 路径健康检查
+http://localhost:8080/api/v1/bilibili/room/init?shortId=1986387323  # 测试Bilibili API
+```
+
+## 11. Bilibili直播数据监控
+
+### 11.1 功能说明
+- **直播间短号转真实room_id**：将Bilibili直播间短号转换为真实的room_id
+- **直播间信息获取**：获取直播间详细信息
+- **直播数据统计**：获取直播间实时统计数据
+
+### 11.2 API 端点
+- **初始化直播间**：GET /api/v1/bilibili/room/init?shortId={shortId}
+- **获取直播间信息**：GET /api/v1/bilibili/room/info?roomId={roomId}
+- **获取直播间统计**：GET /api/v1/bilibili/room/stats?roomId={roomId}
+
+### 11.3 示例调用
+```powershell
+# 测试直播间初始化
+Invoke-WebRequest -Uri "http://localhost:8080/api/v1/bilibili/room/init?shortId=1986387323" -Method GET
+
+# 测试直播间统计
+Invoke-WebRequest -Uri "http://localhost:8080/api/v1/bilibili/room/stats?roomId=1986387323" -Method GET
+```
+
+## 12. 贡献指南
 
 1. 遵循 OpenAPI 3.0.3 规范
 2. 保持接口设计的一致性
 3. 及时更新 API 契约文档
 4. 确保 Mock 服务能正常启动
 5. 提交前验证文档格式正确性
+6. 后端代码遵循 Java 编码规范
+7. 确保 Bilibili API 集成功能正常
+
+## 13. 项目状态
+
+### 13.1 已完成的工作
+- ✅ 生成项目进度文档："已经工作的具体内容.md"
+- ✅ 验证 Java 21.0.10 安装
+- ✅ 构建并启动后端服务
+- ✅ 实现 Bilibili 直播数据监控功能
+- ✅ 验证 Prism Mock 服务 /api/v1/ 路径修复
+- ✅ 检查依赖配置文件
+- ✅ 添加健康检查控制器，修复根路径错误问题
+
+### 13.2 服务运行状态
+- **后端服务**：运行在 http://localhost:8080
+- **Prism Mock 服务**：运行在 http://localhost:4010
+- **Bilibili API**：已集成并测试通过
+
+### 13.3 测试结果
+- ✅ Bilibili API：成功获取直播间信息和统计数据
+- ✅ Prism Mock 服务：/api/v1/ 路径访问正常
+- ✅ 后端服务：运行稳定，无错误
+
+### 13.4 技术亮点
+- **模块化设计**：清晰的代码结构，便于维护和扩展
+- **完整的 API 集成**：成功集成 Bilibili 直播 API
+- **安全认证**：使用 JWT 进行身份验证
+- **灵活的数据处理**：直接返回原始 JSON 字符串，避免字段不匹配问题
+- **完整的 API 文档**：详细的 OpenAPI 文档，方便前端集成

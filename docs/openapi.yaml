@@ -667,6 +667,117 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiResponse'
+  /bilibili/room/init:
+    get:
+      operationId: getBilibiliRoomInit
+      summary: Get Bilibili Room Init
+      description: Get real room ID from short ID
+      tags: [bilibili]
+      security: []
+      parameters:
+        - name: shortId
+          in: query
+          required: true
+          schema:
+            type: integer
+            description: Bilibili room short ID
+      responses:
+        '200':
+          description: Room init successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          code:
+                            type: integer
+                          message:
+                            type: string
+                          data:
+                            type: object
+                            properties:
+                              room_id:
+                                type: integer
+                              short_id:
+                                type: integer
+                              uid:
+                                type: integer
+                              title:
+                                type: string
+                              cover:
+                                type: string
+                              online:
+                                type: string
+                              live_status:
+                                type: string
+                              area_id:
+                                type: string
+                              area_name:
+                                type: string
+                              parent_area_id:
+                                type: string
+                              parent_area_name:
+                                type: string
+                              user_cover:
+                                type: string
+                              nickname:
+                                type: string
+  /bilibili/room/info:
+    get:
+      operationId: getBilibiliRoomInfo
+      summary: Get Bilibili Room Info
+      description: Get room information by real room ID
+      tags: [bilibili]
+      security: []
+      parameters:
+        - name: roomId
+          in: query
+          required: true
+          schema:
+            type: integer
+            description: Bilibili room real ID
+      responses:
+        '200':
+          description: Room info successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: object
+                        additionalProperties: true
+  /bilibili/room/stats:
+    get:
+      operationId: getBilibiliRoomStats
+      summary: Get Bilibili Room Stats
+      description: Get room statistics by real room ID
+      tags: [bilibili]
+      security: []
+      parameters:
+        - name: roomId
+          in: query
+          required: true
+          schema:
+            type: integer
+            description: Bilibili room real ID
+      responses:
+        '200':
+          description: Room stats successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: object
+                        additionalProperties: true
   /auth/login:
     post:
       summary: Login

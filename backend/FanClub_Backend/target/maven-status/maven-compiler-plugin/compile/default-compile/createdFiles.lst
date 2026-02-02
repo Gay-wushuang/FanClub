@@ -1,0 +1,15 @@
+com\example\bilibili\service\BilibiliApiService.class
+com\example\controller\HealthController.class
+com\example\pojo\OperateLog.class
+com\example\exception\GlobalExceptionHandler.class
+com\example\anno\Log.class
+com\example\bilibili\controller\BilibiliController.class
+com\example\filter\TokenFilter.class
+com\example\aop\OperateLogAspect.class
+com\example\bilibili\pojo\BilibiliRoomInitResponse$Data.class
+com\example\mapper\OperateLogMapper.class
+com\example\utils\CurrentHolder.class
+com\example\pojo\Result.class
+com\example\utils\JwtUtils.class
+com\example\bilibili\pojo\BilibiliRoomInitResponse.class
+com\example\FanClubBackendApplication.class

@@ -11,27 +11,27 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
 
-@Component
 public class JwtUtils {
 
-    private final SecretKey secretKey;
-    private final long expirationTime;
+    private static SecretKey secretKey;
+    private static long expirationTime;
 
-    public JwtUtils(
-            @Value("${jwt.secret}") String secretString,
-            @Value("${jwt.expiration:86400000}") long expirationTime
-    ) {
+    public static void init(String secretString, long expiration) {
         // 验证并创建密钥
-        if (secretString.length() < 32) {
-            throw new IllegalArgumentException("JWT密钥必须至少32字符");
+        if (secretString.length() < 16) {
+            throw new IllegalArgumentException("JWT密钥必须至少16字符");
         }
-        this.secretKey = Keys.hmacShaKeyFor(
-                Base64.getDecoder().decode(secretString)
+        // 确保密钥长度足够
+        while (secretString.length() < 32) {
+            secretString += secretString;
+        }
+        secretKey = Keys.hmacShaKeyFor(
+                secretString.getBytes()
         );
-        this.expirationTime = expirationTime;
+        expirationTime = expiration;
     }
 
-    public String generateToken(Map<String, Object> claims) {
+    public static String generateToken(Map<String, Object> claims) {
         return Jwts.builder()
                 .claims(claims)
                 .issuedAt(new Date())

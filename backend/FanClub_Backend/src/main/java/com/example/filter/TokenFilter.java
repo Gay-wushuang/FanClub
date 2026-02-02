@@ -21,7 +21,7 @@ public class TokenFilter implements Filter {
         //1,获取请求路径
         String uri = request.getRequestURI();
         //2,排除不需要验证token的请求路径
-        if (uri.contains("/login") || uri.contains("/register")) {
+        if (uri.contains("/login") || uri.contains("/register") || uri.contains("/bilibili")) {
 
             log.info("无需验证token，直接放行: {}", uri);
 
