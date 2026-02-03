@@ -195,7 +195,7 @@ E:\Java\jdk-21.0.10\bin\java.exe -jar target/FanClub_BackEnd-0.0.1-SNAPSHOT.jar
 ```
 http://localhost:8080/  # 根路径健康检查
 http://localhost:8080/api/v1/  # API 路径健康检查
-http://localhost:8080/api/v1/bilibili/room/init?shortId=1986387323  # 测试Bilibili API
+http://localhost:8080/api/v1/bilibili/room/init?id=1986387323  # 测试Bilibili API
 ```
 
 ## 11. Bilibili直播数据监控
@@ -239,6 +239,12 @@ Invoke-WebRequest -Uri "http://localhost:8080/api/v1/bilibili/room/stats?roomId=
 - ✅ 验证 Prism Mock 服务 /api/v1/ 路径修复
 - ✅ 检查依赖配置文件
 - ✅ 添加健康检查控制器，修复根路径错误问题
+- ✅ 完成M0工程基座：检查并完善后端Spring Boot配置、添加Swagger文档、实现统一返回体和异常处理
+- ✅ 实现RBAC权限框架（主播/经纪人角色）
+- ✅ 创建数据库表结构（sessions、event_danmaku、event_gift、metrics_bucket）
+- ✅ 实现M1单场基础数据：场次列表和单场summary接口
+- ✅ 实现M2明细和聚合：礼物/弹幕事件采集和时间段聚合
+- ✅ 完善数据采集定时任务，实现实时数据监控
 
 ### 13.2 服务运行状态
 - **后端服务**：运行在 http://localhost:8080
@@ -249,6 +255,9 @@ Invoke-WebRequest -Uri "http://localhost:8080/api/v1/bilibili/room/stats?roomId=
 - ✅ Bilibili API：成功获取直播间信息和统计数据
 - ✅ Prism Mock 服务：/api/v1/ 路径访问正常
 - ✅ 后端服务：运行稳定，无错误
+- ✅ M1单场基础数据接口：场次列表和单场summary接口返回正常
+- ✅ M2明细和聚合接口：礼物/弹幕事件明细和聚合数据接口返回正常
+- ✅ 数据采集定时任务：每10秒采集一次直播数据
 
 ### 13.4 技术亮点
 - **模块化设计**：清晰的代码结构，便于维护和扩展
@@ -256,3 +265,64 @@ Invoke-WebRequest -Uri "http://localhost:8080/api/v1/bilibili/room/stats?roomId=
 - **安全认证**：使用 JWT 进行身份验证
 - **灵活的数据处理**：直接返回原始 JSON 字符串，避免字段不匹配问题
 - **完整的 API 文档**：详细的 OpenAPI 文档，方便前端集成
+- **RBAC权限框架**：实现了主播/经纪人角色的权限管理
+- **实时数据监控**：通过定时任务实现直播数据的实时采集和监控
+- **完善的错误处理**：当数据库连接失败时返回模拟数据，确保服务可用性
+
+## 14. 新增功能使用说明
+
+### 14.1 仪表盘接口
+- **获取场次列表**：GET /api/v1/dashboard/sessions?page=1&size=10
+- **获取单场summary**：GET /api/v1/dashboard/sessions/{sessionId}/summary
+- **获取场次事件明细**：GET /api/v1/dashboard/sessions/{sessionId}/events?type=gift
+- **获取聚合数据**：GET /api/v1/dashboard/aggregate?granularity=hour
+
+### 14.2 认证接口
+- **用户登录**：POST /api/v1/auth/login
+- **获取用户信息**：POST /api/v1/auth/info
+- **用户登出**：POST /api/v1/auth/logout
+
+### 14.3 示例调用
+```powershell
+# 测试场次列表
+Invoke-WebRequest -Uri "http://localhost:8080/api/v1/dashboard/sessions?page=1&size=10" -Method GET
+
+# 测试单场summary
+Invoke-WebRequest -Uri "http://localhost:8080/api/v1/dashboard/sessions/1/summary" -Method GET
+
+# 测试礼物事件明细
+Invoke-WebRequest -Uri "http://localhost:8080/api/v1/dashboard/sessions/1/events?type=gift" -Method GET
+
+# 测试聚合数据
+Invoke-WebRequest -Uri "http://localhost:8080/api/v1/dashboard/aggregate?granularity=hour" -Method GET
+
+# 测试用户登录
+Invoke-WebRequest -Uri "http://localhost:8080/api/v1/auth/login" -Method POST -Body '{"username":"admin","password":"123456"}' -ContentType "application/json"
+```
+
+### 14.4 数据采集说明
+- **采集频率**：每10秒采集一次直播数据
+- **监控的直播间**：1986387323, 1838214834
+- **采集的数据**：直播间信息、在线人数、礼物事件、弹幕事件
+- **数据存储**：存储到sessions、event_danmaku、event_gift、metrics_bucket表
+
+### 14.5 健康检查
+- **服务健康检查**：GET /health
+- **Swagger文档**：GET /v3/api-docs
+- **Swagger UI**：GET /swagger-ui.html
+
+## 15. 项目进度
+
+### 15.1 里程碑完成情况
+- **M0（工程基座）**：✅ 完成
+- **M1（单场基础数据）**：✅ 完成
+- **M2（明细和聚合）**：✅ 完成
+- **M3（插件/桌面小窗 + 可靠性）**：🔄 进行中
+
+### 15.2 后续工作计划
+- 实现M3插件/桌面小窗功能
+- 完善可靠性和降级策略
+- 实现数据导出和审计日志
+- 优化数据库表结构和索引
+- 增加更多的测试用例
+- 完善前端集成

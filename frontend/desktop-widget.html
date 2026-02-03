@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FanClub 桌面小窗</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #1a1a1a;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            overflow: hidden;
+            min-width: 300px;
+            max-width: 400px;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .title {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .control-btn {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background-color 0.3s ease;
+        }
+        
+        .control-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .close-btn {
+            background-color: rgba(255, 0, 0, 0.3);
+        }
+        
+        .close-btn:hover {
+            background-color: rgba(255, 0, 0, 0.5);
+        }
+        
+        .room-info {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        
+        .room-title {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .room-id {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-bottom: 10px;
+        }
+        
+        .status {
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            display: inline-block;
+        }
+        
+        .status-online {
+            background-color: rgba(0, 255, 0, 0.2);
+            color: #00ff00;
+        }
+        
+        .status-offline {
+            background-color: rgba(255, 0, 0, 0.2);
+            color: #ff0000;
+        }
+        
+        .status-delay {
+            background-color: rgba(255, 255, 0, 0.2);
+            color: #ffff00;
+        }
+        
+        .metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .metric-card {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            padding: 10px;
+        }
+        
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .metric-label {
+            font-size: 0.7rem;
+            opacity: 0.7;
+        }
+        
+        .recent-events {
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .events-title {
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+        
+        .events-list {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            padding: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .event-item {
+            font-size: 0.7rem;
+            margin-bottom: 5px;
+            text-align: left;
+            opacity: 0.8;
+        }
+        
+        .event-time {
+            color: #888;
+            margin-right: 5px;
+        }
+        
+        .event-danmaku {
+            color: #4CAF50;
+        }
+        
+        .event-gift {
+            color: #FF9800;
+        }
+        
+        .footer {
+            margin-top: 20px;
+            font-size: 0.7rem;
+            opacity: 0.5;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title">FanClub 直播监控</div>
+            <div class="controls">
+                <button class="control-btn" id="refresh-btn">刷新</button>
+                <button class="control-btn close-btn" id="close-btn">关闭</button>
+            </div>
+        </div>
+        
+        <div class="room-info">
+            <div class="room-title" id="room-title">加载中...</div>
+            <div class="room-id" id="room-id">房间ID: -</div>
+            <div class="status status-offline" id="status">未连接</div>
+        </div>
+        
+        <div class="metrics">
+            <div class="metric-card">
+                <div class="metric-value" id="viewer-count">0</div>
+                <div class="metric-label">在线人数</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="danmaku-count">0</div>
+                <div class="metric-label">弹幕数</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="gift-count">0</div>
+                <div class="metric-label">礼物数</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="gift-amount">0</div>
+                <div class="metric-label">礼物价值</div>
+            </div>
+        </div>
+        
+        <div class="recent-events">
+            <div class="events-title">最近事件</div>
+            <div class="events-list" id="events-list">
+                <div class="event-item">加载中...</div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            数据更新时间: <span id="update-time">-</span>
+        </div>
+    </div>
+    
+    <script>
+        // 配置
+        const config = {
+            roomId: new URLSearchParams(window.location.search).get('roomId') || '1838214834',
+            refreshInterval: 3000, // 3秒刷新一次
+            apiBaseUrl: 'http://localhost:8080/api/v1'
+        };
+        
+        // 状态管理
+        let lastUpdateTime = 0;
+        let isConnected = true;
+        let recentEvents = [];
+        
+        // DOM元素
+        const elements = {
+            roomTitle: document.getElementById('room-title'),
+            roomId: document.getElementById('room-id'),
+            status: document.getElementById('status'),
+            viewerCount: document.getElementById('viewer-count'),
+            danmakuCount: document.getElementById('danmaku-count'),
+            giftCount: document.getElementById('gift-count'),
+            giftAmount: document.getElementById('gift-amount'),
+            eventsList: document.getElementById('events-list'),
+            updateTime: document.getElementById('update-time'),
+            refreshBtn: document.getElementById('refresh-btn'),
+            closeBtn: document.getElementById('close-btn')
+        };
+        
+        // 关闭按钮事件
+        elements.closeBtn.addEventListener('click', () => {
+            window.close();
+        });
+        
+        // 刷新按钮事件
+        elements.refreshBtn.addEventListener('click', () => {
+            fetchLiveData();
+        });
+        
+        // 更新状态
+        function updateStatus(type, message) {
+            elements.status.className = `status status-${type}`;
+            elements.status.textContent = message;
+        }
+        
+        // 添加事件
+        function addEvent(type, content) {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('zh-CN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            recentEvents.unshift({
+                time: timeStr,
+                type: type,
+                content: content
+            });
+            
+            // 只保留最近10条
+            recentEvents = recentEvents.slice(0, 10);
+            
+            renderEvents();
+        }
+        
+        // 渲染事件列表
+        function renderEvents() {
+            if (recentEvents.length === 0) {
+                elements.eventsList.innerHTML = '<div class="event-item">暂无事件</div>';
+                return;
+            }
+            
+            elements.eventsList.innerHTML = recentEvents.map(event => {
+                return `
+                    <div class="event-item event-${event.type}">
+                        <span class="event-time">${event.time}</span>
+                        ${event.content}
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // 获取直播数据
+        async function fetchLiveData() {
+            try {
+                // 获取房间信息
+                const roomResponse = await fetch(`${config.apiBaseUrl}/bilibili/room/init?shortId=${config.roomId}`);
+                if (!roomResponse.ok) throw new Error('获取房间信息失败');
+                
+                const roomData = await roomResponse.json();
+                if (roomData.code === 1 && roomData.data) {
+                    const roomInfo = roomData.data.data;
+                    elements.roomTitle.textContent = roomInfo.title || '直播间';
+                    elements.roomId.textContent = `房间ID: ${roomInfo.room_id}`;
+                    
+                    // 更新状态
+                    if (roomInfo.live_status === 1) {
+                        updateStatus('online', '直播中');
+                    } else if (roomInfo.live_status === 0) {
+                        updateStatus('offline', '未开播');
+                    } else if (roomInfo.live_status === 2) {
+                        updateStatus('offline', '轮播中');
+                    }
+                }
+                
+                // 更新时间
+                const now = new Date();
+                elements.updateTime.textContent = now.toLocaleString('zh-CN');
+                
+                lastUpdateTime = Date.now();
+                isConnected = true;
+                
+                // 模拟事件
+                if (Math.random() > 0.7) {
+                    addEvent('danmaku', '用户发送了一条弹幕');
+                }
+                if (Math.random() > 0.9) {
+                    addEvent('gift', '用户赠送了礼物');
+                }
+                
+            } catch (error) {
+                console.error('获取数据失败:', error);
+                updateStatus('offline', '数据获取失败');
+                isConnected = false;
+            }
+        }
+        
+        // 模拟数据更新
+        function updateMockData() {
+            elements.viewerCount.textContent = Math.floor(Math.random() * 1000) + 100;
+            elements.danmakuCount.textContent = Math.floor(Math.random() * 500) + 50;
+            elements.giftCount.textContent = Math.floor(Math.random() * 100) + 10;
+            elements.giftAmount.textContent = Math.floor(Math.random() * 1000) + 100;
+        }
+        
+        // 初始化
+        function init() {
+            // 初始获取数据
+            fetchLiveData();
+            
+            // 定时刷新数据
+            setInterval(() => {
+                fetchLiveData();
+                updateMockData();
+            }, config.refreshInterval);
+            
+            // 初始更新模拟数据
+            updateMockData();
+        }
+        
+        // 启动应用
+        init();
+    </script>
+</body>
+</html>

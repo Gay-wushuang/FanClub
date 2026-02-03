@@ -24,4 +24,13 @@ public class HealthController {
     public Result apiHealthCheck() {
         return Result.success("API service is running");
     }
+    
+    /**
+     * API 健康检查（/api/v1/health路径）
+     * @return 健康状态响应
+     */
+    @GetMapping("/api/v1/health")
+    public Result apiHealthCheckV2() {
+        return Result.success("API service is running");
+    }
 }

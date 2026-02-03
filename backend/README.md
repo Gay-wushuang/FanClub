@@ -89,4 +89,67 @@ curl http://localhost:8080/api/v1/bilibili/room/init?shortId=1838214834
 
 # 获取房间状态信息
 curl http://localhost:8080/api/v1/bilibili/room/stats?roomId=1838214834
+
+# 获取场次列表
+curl http://localhost:8080/api/v1/dashboard/sessions
+
+# 获取场次详情
+curl http://localhost:8080/api/v1/dashboard/sessions/1/summary
+
+# 获取事件明细
+curl http://localhost:8080/api/v1/dashboard/sessions/1/events
+
+# 获取聚合指标
+curl http://localhost:8080/api/v1/dashboard/aggregate
+
+# 健康检查
+curl http://localhost:8080/api/v1/health
 ```
+
+## WebSocket实时数据推送
+
+### 连接地址
+```
+ws://localhost:8080/api/v1/ws/live-data
+```
+
+### 使用方法
+1. 建立WebSocket连接
+2. 发送订阅消息：`{"roomId": "1838214834"}`
+3. 接收实时推送的直播数据（每5秒一次）
+
+### 推送数据格式
+```json
+{
+  "code": 1,
+  "msg": "success",
+  "data": {
+    "code": 0,
+    "msg": "ok",
+    "data": {
+      "room_id": 1838214834,
+      "live_status": 1,
+      "live_time": 1769800000,
+      "live_time_valid": true,
+      "online": 1234
+      // 其他字段...
+    }
+  }
+}
+```
+
+## M3里程碑完成情况
+
+### 已实现功能
+1. **OBS Browser Source页面**：`frontend/index.html` - 支持显示直播指标和状态
+2. **桌面小窗**：`frontend/desktop-widget.html` - 支持独立窗口监控
+3. **WebSocket实时推送**：实现了WebSocket连接和定时数据推送
+4. **系统可靠性**：
+   - 添加了HTTP请求重试机制
+   - 增强了错误处理
+   - 实现了数据库连接失败的降级处理
+   - 完善了异常捕获和日志记录
+
+### 访问方式
+- OBS Browser Source：`http://localhost:8080/frontend/index.html?roomId=1838214834`
+- 桌面小窗：`http://localhost:8080/frontend/desktop-widget.html?roomId=1838214834`
